@@ -1,10 +1,15 @@
 use rust_webserver::Server;
 
+
+fn test_callback() -> () {
+    println!("Hello World!")
+}
+
 fn main() {
     // Example Usage
-    let app: Server = Server {};
+    let mut app: Server = Server::build();
 
-    app.get("/", "some_func".to_string());
+    app.get("/", test_callback);
 
     app.listen(7878);
 }
