@@ -92,10 +92,13 @@ impl Server {
         }
     }
 
-    // TODO: Add parameter for closure
-    pub fn listen(&self, port: u16) -> () {
+    pub fn listen(&self, port: u16, nullary_func: Option<fn()>) -> () {
         let address: String = format!("127.0.0.1:{}", port.to_string());
         let listener: TcpListener = TcpListener::bind(address).unwrap();
+
+        if let Some(func) = nullary_func {
+            func()
+        }
 
         for stream in listener.incoming() {
             let mut stream: TcpStream = stream.unwrap();
