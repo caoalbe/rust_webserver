@@ -1,6 +1,7 @@
 use rust_webserver::{Request, Response, Server};
 
 fn test_callback(mut req: Request, mut res: Response) -> () {
+    res.set_content("Diamond Hands".to_string());
     res.send();
 }
 
