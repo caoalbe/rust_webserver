@@ -31,7 +31,6 @@ impl FromStr for HttpMethod {
     }
 }
 
-// TODO: Create a request, and response object
 pub struct Request {
     http_method: HttpMethod,
     http_route: String,
@@ -71,7 +70,7 @@ impl Request {
             .take_while(|line| !line.is_empty())
             .collect();
 
-        println!("Request: {http_request:#?}");
+        // println!("Request: {http_request:#?}");
 
         let mut http_header = http_request[0].split_whitespace();
 
@@ -99,9 +98,25 @@ impl Server {
         let listener: TcpListener = TcpListener::bind(address).unwrap();
 
         for stream in listener.incoming() {
-            let stream: TcpStream = stream.unwrap();
+            let mut stream: TcpStream = stream.unwrap();
 
-            self.handle_connection(stream);
+            let req: Request = Request::new(&stream);
+            let res: Response = Response::new();
+
+            let maybe_func = self
+                .router
+                .get_key_value(&(req.http_method, req.http_route.clone()));
+
+            match maybe_func {
+                Some((_key, func)) => {
+                    func(&req, &res);
+                }
+                None => {}
+            }
+
+            stream
+                .write_all(&res.generate_response().as_bytes())
+                .unwrap();
         }
     }
 
@@ -109,25 +124,5 @@ impl Server {
         // bind route to func
         self.router
             .insert((HttpMethod::GET, route.to_string()), callback);
-    }
-
-    fn handle_connection(&self, mut stream: TcpStream) {
-        let req: Request = Request::new(&stream);
-        let res: Response = Response::new();
-
-        let maybe_func = self
-            .router
-            .get_key_value(&(req.http_method, req.http_route.clone()));
-
-        match maybe_func {
-            Some((_key, func)) => {
-                func(&req, &res);
-            }
-            None => {}
-        }
-
-        stream
-            .write_all(&res.generate_response().as_bytes())
-            .unwrap();
     }
 }
