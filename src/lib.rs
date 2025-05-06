@@ -1,6 +1,5 @@
 use std::{
     collections::HashMap,
-    io::prelude::*,
     net::{TcpListener, TcpStream},
 };
 
@@ -13,10 +12,7 @@ pub struct Server {
     router: HashMap<(HttpMethod, String), CallbackHandler>,
 }
 
-// TODO: Should req and res be owned or borrowed in the callback?
-//       If Response implements send(), I think it should be owned
-//       We can expect the user to control when the server responds
-type CallbackHandler = fn(req: &Request, res: &Response);
+type CallbackHandler = fn(req: Request, res: Response);
 
 impl Server {
     pub fn build() -> Server {
@@ -34,23 +30,19 @@ impl Server {
         }
 
         for stream in listener.incoming() {
-            let mut stream: TcpStream = stream.unwrap();
+            let stream: TcpStream = stream.unwrap();
 
+            // Note: res must OWN stream; so req can only BORROW
             let req: Request = Request::new(&stream);
-            let res: Response = Response::new();
+            let res: Response = Response::new(stream);
 
             let maybe_func = self.router.get_key_value(&req.get_key());
-
             match maybe_func {
                 Some((_key, func)) => {
-                    func(&req, &res);
+                    func(req, res);
                 }
                 None => {}
             }
-
-            stream
-                .write_all(&res.generate_response().as_bytes())
-                .unwrap();
         }
     }
 

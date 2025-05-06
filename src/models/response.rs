@@ -1,18 +1,22 @@
+use std::{io::Write, net::TcpStream};
+
 pub struct Response {
+    stream: TcpStream,
     status_line: String,
     contents: String,
 }
 
 impl Response {
-    pub fn new() -> Response {
+    pub fn new(stream: TcpStream) -> Response {
         Response {
+            stream,
             status_line: "HTTP/1.1 200 OK".to_string(),
             contents: "Hello Client!".to_string(),
         }
     }
 
-    pub fn generate_response(&self) -> String {
+    pub fn send(&mut self) -> () {
         let output: String = format!("{}\r\n\r\n{}\r\n", self.status_line, self.contents);
-        output
+        self.stream.write_all(output.as_bytes()).unwrap();
     }
 }

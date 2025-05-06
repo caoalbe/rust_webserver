@@ -1,7 +1,7 @@
 use rust_webserver::{Request, Response, Server};
 
-fn test_callback(req: &Request, res: &Response) -> () {
-    println!("Hello Server!")
+fn test_callback(mut req: Request, mut res: Response) -> () {
+    res.send();
 }
 
 fn main() {
