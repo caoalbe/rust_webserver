@@ -1,14 +1,15 @@
 use std::{
     collections::HashMap,
-    io::{prelude::*, BufReader},
-    net::{TcpListener, TcpStream}, str::FromStr,
+    io::{BufReader, prelude::*},
+    net::{TcpListener, TcpStream},
+    str::FromStr,
 };
 
 pub struct Server {
-    router: HashMap<(HttpMethod, String), fn()>,
+    router: HashMap<(HttpMethod, String), CallbackHandler>,
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Copy, Clone)]
 pub enum HttpMethod {
     // TODO: This is not exhaustive.  See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods
     GET,
@@ -31,6 +32,59 @@ impl FromStr for HttpMethod {
 }
 
 // TODO: Create a request, and response object
+pub struct Request {
+    http_method: HttpMethod,
+    http_route: String,
+    http_version: String,
+}
+
+pub struct Response {
+    status_line: String,
+    contents: String,
+}
+
+// TODO: Should req and res be owned or borrowed in the callback?
+//       If Response implements send(), I think it should be owned
+//       We can expect the user to control when the server responds
+type CallbackHandler = fn(req: &Request, res: &Response);
+
+impl Response {
+    fn new() -> Response {
+        Response {
+            status_line: "HTTP/1.1 200 OK".to_string(),
+            contents: "Hello Client!".to_string(),
+        }
+    }
+
+    fn generate_response(&self) -> String {
+        let output: String = format!("{}\r\n\r\n{}\r\n", self.status_line, self.contents);
+        output
+    }
+}
+
+impl Request {
+    fn new(stream: &TcpStream) -> Request {
+        let buf_reader = BufReader::new(stream);
+        let http_request: Vec<_> = buf_reader
+            .lines()
+            .map(|result| result.unwrap())
+            .take_while(|line| !line.is_empty())
+            .collect();
+
+        println!("Request: {http_request:#?}");
+
+        let mut http_header = http_request[0].split_whitespace();
+
+        let http_method: HttpMethod = http_header.next().unwrap_or("").parse().unwrap();
+        let http_route = http_header.next().unwrap_or("").to_string();
+        let http_version = http_header.next().unwrap_or("").to_string();
+        Request {
+            http_method,
+            http_route,
+            http_version,
+        }
+    }
+}
 
 impl Server {
     pub fn build() -> Server {
@@ -51,44 +105,29 @@ impl Server {
         }
     }
 
-    pub fn get(&mut self, route: &str, callback: fn()) -> () {
+    pub fn get(&mut self, route: &str, callback: CallbackHandler) -> () {
         // bind route to func
         self.router
             .insert((HttpMethod::GET, route.to_string()), callback);
     }
 
-
     fn handle_connection(&self, mut stream: TcpStream) {
-        let buf_reader = BufReader::new(&stream);
-        let http_request: Vec<_> = buf_reader
-            .lines()
-            .map(|result| result.unwrap())
-            .take_while(|line| !line.is_empty())
-            .collect();
-    
-        // println!("Request: {http_request:#?}");
+        let req: Request = Request::new(&stream);
+        let res: Response = Response::new();
 
+        let maybe_func = self
+            .router
+            .get_key_value(&(req.http_method, req.http_route.clone()));
 
-        let mut http_header = http_request[0].split_whitespace();
-        let http_method: HttpMethod = http_header.next().unwrap_or("").parse().unwrap();
-        let http_route = http_header.next().unwrap_or("");
-        let http_version =http_header.next().unwrap_or("");
-
-        let some_func = self.router.get_key_value(&(http_method, http_route.to_string()));
-    
-        match some_func {
+        match maybe_func {
             Some((_key, func)) => {
-                func();
-            },
+                func(&req, &res);
+            }
             None => {}
         }
 
-        // let status_line = "HTTP/1.1 200 OK";
-        // let contents =
-        //     "{\"message\": \"New user created\", \"user\": {\"firstName\": \"Paul\", \"Klee\"} }";
-        // let response = format!("{status_line}\r\nContent-Type: application/json\r\n\r\n{contents}");
-    
-        // stream.write_all(response.as_bytes()).unwrap();
+        stream
+            .write_all(&res.generate_response().as_bytes())
+            .unwrap();
     }
-    
 }

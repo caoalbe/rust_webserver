@@ -1,8 +1,7 @@
-use rust_webserver::Server;
+use rust_webserver::{Request, Response, Server};
 
-
-fn test_callback() -> () {
-    println!("Hello World!")
+fn test_callback(req: &Request, res: &Response) -> () {
+    println!("Hello Server!")
 }
 
 fn main() {
