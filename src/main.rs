@@ -1,7 +1,11 @@
 use rust_webserver::{Request, Response, Server};
 
 fn test_callback(mut req: Request, mut res: Response) -> () {
-    res.set_content("Diamond Hands".to_string());
+    if req.get_query("name") == "anthonyEdwards" {
+        res.set_content("jordan".to_string());
+    } else {
+        res.set_content("mwoya?".to_string());
+    }
     res.send();
 }
 

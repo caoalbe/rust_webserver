@@ -1,12 +1,13 @@
 use crate::common::HttpMethod;
 use std::{
-    io::{BufReader, prelude::*},
-    net::TcpStream,
+    collections::HashMap, io::{prelude::*, BufReader}, net::TcpStream
 };
 
 pub struct Request {
-    http_method: HttpMethod,
-    http_route: String,
+    method: HttpMethod,
+    full_route: String,
+    path: String,
+    query: HashMap<String, String>,
     http_version: String,
 }
 
@@ -21,19 +22,44 @@ impl Request {
 
         // println!("Request: {http_request:#?}");
 
+        // TODO: handle these Option instead of using unwrap_or
         let mut http_header = http_request[0].split_whitespace();
 
-        let http_method: HttpMethod = http_header.next().unwrap_or("").parse().unwrap();
-        let http_route = http_header.next().unwrap_or("").to_string();
+        let method: HttpMethod = http_header.next().unwrap_or("").parse().unwrap();
+
+        let full_route = http_header.next().unwrap_or("").to_string();
+        let mut route_iterator = full_route.split('?');
+        let path = route_iterator.next().unwrap_or("").to_string();
+        let query = route_iterator.next().unwrap_or("").to_string();
         let http_version = http_header.next().unwrap_or("").to_string();
         Request {
-            http_method,
-            http_route,
+            method,
+            full_route,
+            path,
+            query: Self::parse_query(query),
             http_version,
         }
     }
 
+    fn parse_query(query_string: String) -> HashMap<String, String> {
+        let mut output = HashMap::new();
+
+        for pair in query_string.split('&') {
+            // if let (str1, str2) = pair.split('=').collect()
+            let mut pair = pair.split('=');
+            let str1 = pair.next().unwrap_or("").to_string();
+            let str2 = pair.next().unwrap_or("").to_string();
+            output.insert(str1, str2);
+        }
+
+        output
+    }
+
+    pub fn get_query(&self, key: &str) -> String {
+        self.query.get(key).unwrap_or(&"".to_string()).clone()
+    }
+
     pub fn get_key(&self) -> (HttpMethod, String) {
-        (self.http_method, self.http_route.clone())
+        (self.method, self.path.clone())
     }
 }
