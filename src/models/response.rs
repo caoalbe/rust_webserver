@@ -1,9 +1,10 @@
 use std::{collections::HashMap, io::Write, net::TcpStream};
+use crate::common::HttpStatus;
 
 pub struct Response {
     stream: TcpStream,
     http_version: String,
-    http_status: String,
+    http_status: HttpStatus,
     headers: HashMap<String, String>,
     headers_sent: bool,
     contents: String,
@@ -11,10 +12,11 @@ pub struct Response {
 
 impl Response {
     pub fn new(stream: TcpStream) -> Response {
+
         Response {
             stream,
             http_version: "HTTP/1.1".to_string(),
-            http_status: "200 OK".to_string(),
+            http_status: HttpStatus::OK, // TODO: What should the default value be?
             headers: HashMap::new(),
             headers_sent: false,
             contents: "".to_string(),
@@ -23,6 +25,10 @@ impl Response {
 
     pub fn append_header(&mut self, field: String, value: String) -> () {
         self.headers.insert(field, value);
+    }
+
+    pub fn set_status(&mut self, new_status: HttpStatus) -> () {
+        self.http_status = new_status
     }
 
     pub fn set_content(&mut self, new_content: String) -> () {
