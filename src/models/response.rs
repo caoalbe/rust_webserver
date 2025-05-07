@@ -5,6 +5,7 @@ pub struct Response {
     http_version: String,
     http_status: String,
     contents: String,
+    headers_sent: bool,
 }
 
 impl Response {
@@ -13,7 +14,8 @@ impl Response {
             stream,
             http_version: "HTTP/1.1".to_string(),
             http_status: "200 OK".to_string(),
-            contents: "Hello Client!".to_string(),
+            contents: "".to_string(),
+            headers_sent: false,
         }
     }
 
@@ -27,5 +29,6 @@ impl Response {
             self.http_version, self.http_status, self.contents
         );
         self.stream.write_all(output.as_bytes()).unwrap();
+        self.headers_sent = true;
     }
 }
