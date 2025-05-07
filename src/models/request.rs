@@ -1,6 +1,8 @@
 use crate::common::HttpMethod;
 use std::{
-    collections::HashMap, io::{prelude::*, BufReader}, net::TcpStream
+    collections::HashMap,
+    io::{BufReader, prelude::*},
+    net::TcpStream,
 };
 
 pub struct Request {
@@ -53,6 +55,14 @@ impl Request {
         }
 
         output
+    }
+
+    pub fn get_full_route(&self) -> String {
+        self.full_route.clone()
+    }
+
+    pub fn get_http_version(&self) -> String {
+        self.http_version.clone()
     }
 
     pub fn get_query(&self, key: &str) -> String {
