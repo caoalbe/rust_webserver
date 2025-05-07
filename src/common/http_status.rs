@@ -4,7 +4,7 @@ use std::fmt;
 #[derive(Copy, Clone)]
 pub enum HttpStatus {
     // TODO: This is not exhaustive: See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status
-    OK = 200
+    OK = 200,
 }
 
 impl HttpStatus {

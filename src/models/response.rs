@@ -1,5 +1,5 @@
-use std::{collections::HashMap, io::Write, net::TcpStream};
 use crate::common::HttpStatus;
+use std::{collections::HashMap, io::Write, net::TcpStream};
 
 pub struct Response {
     stream: TcpStream,
@@ -12,7 +12,6 @@ pub struct Response {
 
 impl Response {
     pub fn new(stream: TcpStream) -> Response {
-
         Response {
             stream,
             http_version: "HTTP/1.1".to_string(),
