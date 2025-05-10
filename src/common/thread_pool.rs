@@ -26,7 +26,10 @@ impl ThreadPool {
             workers.push(Worker::new(id, Arc::clone(&consumer)));
         }
 
-        ThreadPool { _workers: workers, producer }
+        ThreadPool {
+            _workers: workers,
+            producer,
+        }
     }
 
     pub fn execute<F>(&self, closure: F) -> ()
