@@ -5,25 +5,28 @@ use std::{
 
 pub mod common;
 pub mod models;
-pub use common::HttpMethod;
+pub use common::{HttpMethod, ThreadPool};
 pub use models::{Request, Response};
 
 pub struct Server {
     router: HashMap<(HttpMethod, String), CallbackHandler>,
 }
 
-type CallbackHandler = fn(req: Request, res: Response);
+type CallbackHandler = fn(req: Request, res: Response) -> ();
 
 impl Server {
-    pub fn build() -> Server {
-        Server {
+    pub fn build() -> &'static mut Server {
+        let boxed = Box::new(Server {
             router: HashMap::new(),
-        }
+        });
+        Box::leak(boxed)
     }
 
-    pub fn listen(&self, port: u16, nullary_func: Option<fn()>) -> () {
+    pub fn listen(&'static self, port: u16, nullary_func: Option<fn()>) -> () {
         let address: String = format!("127.0.0.1:{}", port.to_string());
         let listener: TcpListener = TcpListener::bind(address).unwrap();
+
+        let thread_pool: ThreadPool = ThreadPool::new(4);
 
         if let Some(func) = nullary_func {
             func()
@@ -39,7 +42,9 @@ impl Server {
             let maybe_func = self.router.get_key_value(&req.get_key());
             match maybe_func {
                 Some((_key, func)) => {
-                    func(req, res);
+                    thread_pool.execute(|| {
+                        func(req, res);
+                    });
                 }
                 None => {}
             }

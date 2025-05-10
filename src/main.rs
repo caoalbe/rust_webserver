@@ -18,7 +18,7 @@ fn slow_callback(_req: Request, mut res: Response) -> () {
 
 fn main() {
     // Example Usage
-    let mut app: Server = Server::build();
+    let app: &mut Server = Server::build();
 
     app.get("/", test_callback);
     app.get("/slow", slow_callback);
