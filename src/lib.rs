@@ -39,9 +39,9 @@ impl Server {
             let req: Request = Request::new(&stream);
             let res: Response = Response::new(stream);
 
-            let maybe_func = self.router.get_key_value(&req.get_key());
+            let maybe_func = self.router.get(&req.get_key());
             match maybe_func {
-                Some((_key, func)) => {
+                Some(func) => {
                     thread_pool.execute(|| {
                         func(req, res);
                     });
