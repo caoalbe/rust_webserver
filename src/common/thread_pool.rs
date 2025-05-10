@@ -44,12 +44,12 @@ struct Worker {
 }
 
 impl Worker {
-    fn new(id: usize, producer: Arc<Mutex<Receiver<Job>>>) -> Worker {
+    fn new(id: usize, consumer: Arc<Mutex<Receiver<Job>>>) -> Worker {
         Worker {
             _id: id,
             _thread: thread::spawn(move || {
                 loop {
-                    let job: Box<dyn FnOnce() + Send> = producer.lock().unwrap().recv().unwrap();
+                    let job: Box<dyn FnOnce() + Send> = consumer.lock().unwrap().recv().unwrap();
                     println!("Worker {id} running job");
                     job();
                     println!("Worker {id} finished job")
