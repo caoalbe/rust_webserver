@@ -8,7 +8,7 @@ use std::{
 
 pub struct ThreadPool {
     workers: Vec<Worker>,
-    producer: Sender<Job>,
+    producer: Option<Sender<Job>>,
 }
 
 impl ThreadPool {
@@ -28,7 +28,7 @@ impl ThreadPool {
 
         ThreadPool {
             workers,
-            producer,
+            producer: Some(producer),
         }
     }
 
@@ -37,12 +37,13 @@ impl ThreadPool {
         F: FnOnce() + Send + 'static,
     {
         let job = Box::new(closure);
-        self.producer.send(job).unwrap();
+        self.producer.as_ref().unwrap().send(job).unwrap();
     }
 }
 
 impl Drop for ThreadPool {
     fn drop(&mut self) {
+        drop(self.producer.take());
         for worker in self.workers.drain(..) {
             worker.thread.join().unwrap();
             println!("Shutdown worker {}", worker.id);
@@ -58,13 +59,24 @@ struct Worker {
 impl Worker {
     fn new(id: usize, consumer: Arc<Mutex<Receiver<Job>>>) -> Worker {
         Worker {
-            id: id,
+            id,
             thread: thread::spawn(move || {
                 loop {
-                    let job: Box<dyn FnOnce() + Send> = consumer.lock().unwrap().recv().unwrap();
-                    println!("Worker {id} running job");
-                    job();
-                    println!("Worker {id} finished job")
+                    let maybe_job = consumer.lock().unwrap().recv();
+                    match maybe_job {
+                        Ok(job) => {
+                            println!("Worker {id} running job");
+                            job();
+                            println!("Worker {id} finished job");
+                        }
+                        Err(std::sync::mpsc::RecvError) => {
+                            // The .recv operation can only fail if the sending half of a
+                            // channel is disconnected.
+                            // Implying that no further messages will ever be received.
+                            println!("Worker {id} shutting down");
+                            break;
+                        }
+                    }
                 }
             }),
         }
