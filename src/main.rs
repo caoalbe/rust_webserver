@@ -19,13 +19,10 @@ fn slow_callback(_req: Request, mut res: Response) -> () {
 fn main() {
     // Example Usage
     let app: &mut Server = Server::build();
+    // app.set_thread_count(4);
 
     app.get("/", test_callback);
     app.get("/slow", slow_callback);
 
-    app.listen(
-        7878,
-        Some(|| println!("Listening on port {}", 7878)),
-        Some(4),
-    );
+    app.listen(7878, Some(|| println!("Listening on port {}", 7878)));
 }
