@@ -23,5 +23,9 @@ fn main() {
     app.get("/", test_callback);
     app.get("/slow", slow_callback);
 
-    app.listen(7878, Some(|| println!("Listening on port {}", 7878)));
+    app.listen(
+        7878,
+        Some(|| println!("Listening on port {}", 7878)),
+        Some(4),
+    );
 }

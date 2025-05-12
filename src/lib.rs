@@ -22,11 +22,16 @@ impl Server {
         Box::leak(boxed)
     }
 
-    pub fn listen(&'static self, port: u16, nullary_func: Option<fn()>) -> () {
+    pub fn listen(
+        &'static self,
+        port: u16,
+        nullary_func: Option<fn()>,
+        thread_count: Option<usize>,
+    ) -> () {
         let address: String = format!("127.0.0.1:{}", port.to_string());
         let listener: TcpListener = TcpListener::bind(address).unwrap();
 
-        let thread_pool: ThreadPool = ThreadPool::new(4);
+        let thread_pool: ThreadPool = ThreadPool::new(thread_count.unwrap_or(1));
 
         if let Some(func) = nullary_func {
             func()
