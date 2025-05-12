@@ -24,7 +24,7 @@ impl Server {
         Box::leak(boxed)
     }
 
-    pub fn thread_count(&mut self, thread_count: usize) -> () {
+    pub fn set_thread_count(&mut self, thread_count: usize) -> () {
         self.thread_count = thread_count;
     }
 
