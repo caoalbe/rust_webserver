@@ -7,7 +7,7 @@ use std::{
 };
 
 pub struct ThreadPool {
-    _workers: Vec<Worker>,
+    workers: Vec<Worker>,
     producer: Sender<Job>,
 }
 
@@ -27,7 +27,7 @@ impl ThreadPool {
         }
 
         ThreadPool {
-            _workers: workers,
+            workers,
             producer,
         }
     }
@@ -41,16 +41,25 @@ impl ThreadPool {
     }
 }
 
+impl Drop for ThreadPool {
+    fn drop(&mut self) {
+        for worker in self.workers.drain(..) {
+            worker.thread.join().unwrap();
+            println!("Shutdown worker {}", worker.id);
+        }
+    }
+}
+
 struct Worker {
-    _id: usize,
-    _thread: JoinHandle<()>,
+    id: usize,
+    thread: JoinHandle<()>,
 }
 
 impl Worker {
     fn new(id: usize, consumer: Arc<Mutex<Receiver<Job>>>) -> Worker {
         Worker {
-            _id: id,
-            _thread: thread::spawn(move || {
+            id: id,
+            thread: thread::spawn(move || {
                 loop {
                     let job: Box<dyn FnOnce() + Send> = consumer.lock().unwrap().recv().unwrap();
                     println!("Worker {id} running job");
