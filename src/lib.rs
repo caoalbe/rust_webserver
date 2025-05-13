@@ -1,24 +1,22 @@
-use std::{
-    collections::HashMap,
-    net::{TcpListener, TcpStream},
-};
+use std::net::{TcpListener, TcpStream};
 
 pub mod common;
 pub mod models;
 pub use common::{HttpMethod, ThreadPool};
-pub use models::{Request, Response};
+pub use models::{
+    Request, Response,
+    router::{CallbackHandler, Router},
+};
 
 pub struct Server {
-    router: HashMap<(HttpMethod, String), CallbackHandler>,
+    router: Router,
     thread_count: usize,
 }
-
-type CallbackHandler = fn(req: Request, res: Response) -> ();
 
 impl Server {
     pub fn build() -> &'static mut Server {
         let boxed = Box::new(Server {
-            router: HashMap::new(),
+            router: Router::new(),
             thread_count: 1,
         });
         Box::leak(boxed)
@@ -45,10 +43,11 @@ impl Server {
             let req: Request = Request::new(&stream);
             let res: Response = Response::new(stream);
 
-            let maybe_func = self.router.get(&req.get_key());
+            // let maybe_func = self.router.get(&req.get_key());
+            let maybe_func: Option<&fn(Request, Response)> = self.router.query(&req.get_key());
             match maybe_func {
                 Some(func) => {
-                    thread_pool.execute(|| {
+                    thread_pool.execute(move || {
                         func(req, res);
                     });
                 }
@@ -59,19 +58,16 @@ impl Server {
 
     // Maps callback to route with GET method
     pub fn get(&mut self, route: &str, callback: CallbackHandler) -> () {
-        self.router
-            .insert((HttpMethod::GET, route.to_string()), callback);
+        self.router.add_route(HttpMethod::GET, route, callback);
     }
 
     // Maps callback to route with PUT method
     pub fn put(&mut self, route: &str, callback: CallbackHandler) -> () {
-        self.router
-            .insert((HttpMethod::PUT, route.to_string()), callback);
+        self.router.add_route(HttpMethod::PUT, route, callback);
     }
 
     // Maps callback to route with POST method
     pub fn post(&mut self, route: &str, callback: CallbackHandler) -> () {
-        self.router
-            .insert((HttpMethod::POST, route.to_string()), callback);
+        self.router.add_route(HttpMethod::POST, route, callback);
     }
 }
