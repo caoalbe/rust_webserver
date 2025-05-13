@@ -47,8 +47,7 @@ fn path_to_regex(path: &str) -> String {
             let name = &segment[1..];
             regex.push_str(&format!("/(?P<{name}>[^/]+)"));
         } else if !segment.is_empty() {
-            regex.push('/');
-            regex.push_str(segment);
+            regex.push_str(&format!("/{segment}"));
         }
     }
     regex.push('$');
