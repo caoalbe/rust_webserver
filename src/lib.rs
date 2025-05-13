@@ -57,9 +57,21 @@ impl Server {
         }
     }
 
+    // Maps callback to route with GET method
     pub fn get(&mut self, route: &str, callback: CallbackHandler) -> () {
-        // bind route to func
         self.router
             .insert((HttpMethod::GET, route.to_string()), callback);
+    }
+
+    // Maps callback to route with PUT method
+    pub fn put(&mut self, route: &str, callback: CallbackHandler) -> () {
+        self.router
+            .insert((HttpMethod::PUT, route.to_string()), callback);
+    }
+
+    // Maps callback to route with POST method
+    pub fn post(&mut self, route: &str, callback: CallbackHandler) -> () {
+        self.router
+            .insert((HttpMethod::POST, route.to_string()), callback);
     }
 }

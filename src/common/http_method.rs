@@ -4,6 +4,7 @@ use std::str::FromStr;
 pub enum HttpMethod {
     // TODO: This is not exhaustive.  See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods
     GET,
+    PUT,
     POST,
 }
 
@@ -16,6 +17,7 @@ impl FromStr for HttpMethod {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_uppercase().as_str() {
             "GET" => Ok(HttpMethod::GET),
+            "PUT" => Ok(HttpMethod::PUT),
             "POST" => Ok(HttpMethod::POST),
             _ => Err(InvalidHttpMethod),
         }
