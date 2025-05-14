@@ -36,9 +36,9 @@ impl Router {
     }
 }
 
-fn path_to_regex(path: &str) -> String {
-    if path == "/" {
-        return "^/$".to_string();
+fn path_to_regex(mut path: &str) -> String {
+    if path.starts_with('/') {
+        path = &path[1..];
     }
 
     let mut regex = String::from("^");
@@ -46,10 +46,29 @@ fn path_to_regex(path: &str) -> String {
         if segment.starts_with(':') {
             let name = &segment[1..];
             regex.push_str(&format!("/(?P<{name}>[^/]+)"));
-        } else if !segment.is_empty() {
+        } else {
             regex.push_str(&format!("/{segment}"));
         }
     }
     regex.push('$');
     regex
+}
+
+#[test]
+fn test_path_to_regex() {
+    assert_eq!(path_to_regex("/"), "^/$");
+    assert_eq!(path_to_regex("//"), "^//$");
+    assert_eq!(path_to_regex("/slow"), "^/slow$");
+    assert_eq!(path_to_regex("/one/two"), "^/one/two$");
+    assert_eq!(
+        path_to_regex("/books/:booksId"),
+        "^/books/(?P<booksId>[^/]+)$"
+    );
+    // Without leading slash
+    assert_eq!(path_to_regex("slow"), "^/slow$");
+    assert_eq!(path_to_regex("one/two"), "^/one/two$");
+    assert_eq!(
+        path_to_regex("books/:booksId"),
+        "^/books/(?P<booksId>[^/]+)$"
+    );
 }
