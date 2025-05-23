@@ -22,8 +22,6 @@ impl Request {
             .take_while(|line| !line.is_empty())
             .collect();
 
-        // println!("Request: {http_request:#?}");
-
         // TODO: handle these Option instead of using unwrap_or
         let mut http_header = http_request[0].split_whitespace();
 
@@ -47,7 +45,6 @@ impl Request {
         let mut output = HashMap::new();
 
         for pair in query_string.split('&') {
-            // if let (str1, str2) = pair.split('=').collect()
             let mut pair = pair.split('=');
             let str1 = pair.next().unwrap_or("").to_string();
             let str2 = pair.next().unwrap_or("").to_string();

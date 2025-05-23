@@ -46,8 +46,6 @@ impl Drop for ThreadPool {
         drop(self.producer.take());
         for worker in self.workers.drain(..) {
             worker.thread.join().unwrap();
-            #[cfg(debug_assertions)]
-            println!("Shutdown worker {}", worker.id);
         }
     }
 }
@@ -66,18 +64,12 @@ impl Worker {
                     let maybe_job = consumer.lock().unwrap().recv();
                     match maybe_job {
                         Ok(job) => {
-                            #[cfg(debug_assertions)]
-                            println!("Worker {id} running job");
                             job();
-                            #[cfg(debug_assertions)]
-                            println!("Worker {id} finished job");
                         }
                         Err(std::sync::mpsc::RecvError) => {
                             // The .recv operation can only fail if the sending half of a
                             // channel is disconnected.
                             // Implying that no further messages will ever be received.
-                            #[cfg(debug_assertions)]
-                            println!("Worker {id} shutting down");
                             break;
                         }
                     }
