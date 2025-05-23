@@ -23,6 +23,7 @@ impl Server {
     }
 
     pub fn set_thread_count(&mut self, thread_count: usize) -> () {
+        assert!(thread_count > 0);
         self.thread_count = thread_count;
     }
 

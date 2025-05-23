@@ -21,9 +21,9 @@ impl ThreadPool {
 
         let consumer: Arc<Mutex<Receiver<Job>>> = Arc::new(Mutex::new(consumer));
 
-        for id in 0..size {
-            // spawn threads
-            workers.push(Worker::new(id, Arc::clone(&consumer)));
+        // Spawn Threads
+        for _ in 0..size {
+            workers.push(Worker::new(Arc::clone(&consumer)));
         }
 
         ThreadPool {
@@ -51,14 +51,12 @@ impl Drop for ThreadPool {
 }
 
 struct Worker {
-    id: usize,
     thread: JoinHandle<()>,
 }
 
 impl Worker {
-    fn new(id: usize, consumer: Arc<Mutex<Receiver<Job>>>) -> Worker {
+    fn new(consumer: Arc<Mutex<Receiver<Job>>>) -> Worker {
         Worker {
-            id,
             thread: thread::spawn(move || {
                 loop {
                     let maybe_job = consumer.lock().unwrap().recv();
